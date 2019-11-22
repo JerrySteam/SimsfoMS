@@ -341,6 +341,7 @@
       <script type="text/javascript" src="'.$path.'@assets/js/plugins/dataTables.bootstrap.min.js"></script>
       <script type="text/javascript" src="'.$path.'@assets/js/plugins/dataTables.buttons.min.js"></script>
       <script type="text/javascript" src="'.$path.'@assets/js/plugins/buttons.print.min.js"></script>
+      <script type="text/javascript" src="'.$path.'@assets/js/plugins/buttons.html5.min.js"></script>
       <!-- The javascript plugin to display page loading on top-->
       <script src="'.$path.'@assets/js/plugins/pace.min.js"></script>  
       <script src="'.$path.'@assets/js/plugins/select2.min.js" type="text/javascript"></script>

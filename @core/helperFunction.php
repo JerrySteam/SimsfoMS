@@ -1051,6 +1051,41 @@
 		return $r;
 	}
 
+	function loadSalesReportTypeIntoCombo($param_cat = '')
+	{
+		$r = '';
+		switch ($param_cat){
+			case 'Daily':
+				$r .= "<option value='-1'> Select Report Type </option>";
+				$r .= "<option value='Daily' selected='selected'> Daily </option>";
+				$r .= "<option value='Monthly'> Monthly </option>";
+				$r .= "<option value='Range'> Range </option>";
+				break;
+
+			case 'Monthly':
+				$r .= "<option value='-1'> Select Report Type </option>";
+				$r .= "<option value='Daily'> Daily </option>";
+				$r .= "<option value='Monthly' selected='selected'> Monthly </option>";
+				$r .= "<option value='Range'> Range </option>";
+				break;
+
+			case 'Range':
+				$r .= "<option value='-1'> Select Report Type </option>";
+				$r .= "<option value='Daily'> Daily </option>";
+				$r .= "<option value='Monthly'> Monthly </option>";
+				$r .= "<option value='Range' selected='selected'> Range </option>";
+				break;
+
+			default:
+				$r .= "<option value='-1'> Select Report Type </option>";
+				$r .= "<option value='Daily'> Daily </option>";
+				$r .= "<option value='Monthly'> Monthly </option>";
+				$r .= "<option value='Range'> Range </option>";
+				break;
+		}
+		return $r;
+	}
+
 	function loadBankAccountIntoCombo($param_cat = '')
 	{
 		$r = '';
@@ -4512,7 +4547,7 @@
 				}
 				
 			}else{
-				$r .= '<tr><td colspan="8" class="text-center">No Record Found</td></tr>';
+				$r .= '<tr><td colspan="6" class="text-center">No Record Found</td></tr>';
 			}
 
 			$r .= '		</tbody>
@@ -4652,6 +4687,132 @@
 			}
 		} catch (Exception $e) {
 			return false;
+			//return $e->getMessage();
+		}
+	}
+
+
+
+	/* Reports Module*/
+
+	function getStartAndEndDate($week, $year) 
+	{
+		date_default_timezone_set('Africa/Lagos'); // Set the Default Time Zone:
+	  	$dto = new DateTime();
+	  	$dto->setISODate($year, $week);
+	  	$ret['week_start'] = $dto->format('Y-m-d');
+	  	$dto->modify('+6 days');
+	  	$ret['week_end'] = $dto->format('Y-m-d');
+	  	return $ret;
+	}
+
+	//Sales Report
+	function ViewSalesReport($reporttype = '-1', $datefrom = '0', $dateto = '0', $month = '-1')
+	{
+		$query = '';
+
+		switch ($reporttype) {
+			case 'Daily':
+				$query = "SELECT s.salesdate, s.salesref, st.stockref, st.stockname, st.description, s.quantity, st.unitsellingprice, s.stockid, (s.quantity * st.unitsellingprice) AS amountpaid 
+						FROM tblsales AS s 
+						INNER JOIN tblstock AS st
+						ON s.stockid = st.stockid 
+						WHERE s.salesdate = '".$datefrom."'
+					";
+				break;
+
+			case 'Range':
+				$query = "SELECT * FROM tblbank AS b
+						INNER JOIN tblbankaccount AS ba
+						ON b.bankid = ba.bankid
+						WHERE ba.datemodified IS NULL
+					";
+				break;
+
+			case 'Monthly':
+				$query = "SELECT * FROM tblbank AS b
+						INNER JOIN tblbankaccount AS ba
+						ON b.bankid = ba.bankid
+						WHERE ba.datemodified IS NULL
+					";
+				break;
+			
+			default:
+				$query = '-1';
+				break;
+		}
+
+		if($query == '-1'){
+			return '<p class="text-danger">Error encountered while retrieving records</p>';
+		}
+
+		try {
+			
+			//return $query;
+			global $dbh;
+		    $rs = $dbh->pdoQuery($query)->results();
+		    $count = count($rs);
+
+		    $r = ' <table class="table" id="viewSalesReportTable">
+		                <thead>
+		                	<tr>
+		                		<th colspan="7" class="text-center" id="ptitle">
+		                			Daily Sales for '.format_display_date($datefrom).'
+		                		</th>
+		                	</tr>
+		                  	<tr>
+			                    <th>SN</th>
+			                    <th>Code/Ref.</th>
+			                    <th>Description</th>
+			                    <th>Quantity</th>
+			                    <th>Unit Price</th>
+			                    <th>Amount (&#8358;)</th>
+			                    <th>Remarks</th>
+		                  	</tr>
+		                </thead>
+	                    <tbody>
+                ';
+			
+			if($count > 0){				
+				$sn = 1;
+				$total = 0;
+				$totalquantity = 0;
+				foreach ($rs as $sales => $sale) {
+					$r .= '
+							<tr>
+								<td>'.$sn.'</td>
+	                            <td>'.$sale['stockref'].'</td>
+	                            <td>'.$sale['stockname'].'</td>
+	                            <td>'.$sale['quantity'].'</td>
+	                            <td>'.formatAmount($sale['unitsellingprice']).'</td>
+	                            <td>'.formatAmount($sale['amountpaid']).'</td>
+	                            <td>'.$sale['description'].'</td>
+                    		</tr>';
+
+                    $total += $sale['amountpaid'];
+                    $totalquantity += $sale['quantity'];
+					$sn++;
+				}
+
+				$r .= '
+						<tfoot>
+		                	<tr>
+		                		<th colspan="4" class="text-right" id="tq">Total Quantity: '.$totalquantity.'</th>
+		                		<th colspan="2" class="text-right" id="gt">Grand Total: (&#8358;)'.formatAmount($total).'</th>
+		                		<th></th>
+		                	</tr>
+		                </tfoot>
+					';
+				
+			}else{
+				$r .= '<tr><td colspan="7" class="text-center">No Record Found</td></tr>';
+			}
+
+			$r .= '		</tbody>
+	                </table>';
+			return $r;
+		} catch (Exception $e) {
+			return '<p class="text-danger">Error encountered while retrieving records</p>';
 			//return $e->getMessage();
 		}
 	}

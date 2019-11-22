@@ -69,8 +69,7 @@
             error: function(x,e) {
                 showSwal('Error!', formatErrorMessage(x, e), 'error', 'Close');
             }
-        })
-        
+        })     
     });
 
     $(document).on('click','.btnViewSales', function (e) {
